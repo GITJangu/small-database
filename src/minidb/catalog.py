@@ -15,8 +15,8 @@ class catalog_schema():
     def __init__(self):
         optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"}}
         sql_raw = "select * from catalog_test1"
-        tree = sqlglot.parse_one("select * from catalog_test1", dialect="postgres")
-        return tree
+        self.tree = sqlglot.parse_one("select * from catalog_test1", dialect="postgres")
+
 
     def rules(self):
         qualified = qualify(tree, schema=optimizer_catalog, dialect="postgres")
@@ -62,40 +62,57 @@ if __name__ == "__main__":
 class operators():
 
     def __init__(self, catalog_schema):
-        self.catalog_schema = op_tree
-
-    def scan(self, op_scan):
-        op_scan = __init__(op_tree).find(exp.scan)
-
-    def filter(self, op_filter):
-        op_filter = __init__(op_tree).find(exp.filter)
-
-    def project(self, op_select):
-        op_select = __init__(op_tree).find(exp.select)
-
-    def join(self, op_join):
-        op_join = __init__(op_tree).find(exp.join)
-
-    def aggregate(self, op_aggregate):
-        op_aggregate = __init__(op_tree).find(exp.aggregate)
-
-    def sort(self, op_orderby):
-        op_orderby = __init__(op_tree).find(exp.orderby)
-
-    def limit(self, op_limit):
-        op_limit = __init__(op_tree).find(exp.limit)
-
-    def distinct(self, op_distinct):
-        op_distinct = __init__(op_tree).find(exp.distinct)
-
-class planner(operators):
-     def __init__(self, value):
-        self.value = value
-        self.children = []
-
-     def children(self):
-         root = planner(operators.join())
+        self.catalog_schema = catalog_schema
         
 
+    def From(self):
+        self.op_From = self.catalog_schema.tree.find(exp.From)
+        return self.op_From
+    
+    def filter(self):
+        self.op_filter = self.catalog_schema.tree.find(exp.Where)
+        return self.op_filter
+    
+    def project(self):
+        self.op_select = self.catalog_schema.tree.find(exp.Select)
+        return self.op_select
 
-     
+    def join(self):
+        self.op_join = self.catalog_schema.tree.find(exp.Join)
+        return self.op_join
+
+    def aggregate(self):
+        self.op_aggregate = self.catalog_schema.tree.find(exp.And)
+        return self.op_aggregate
+    
+    def sort(self):
+        self.op_orderby = self.catalog_schema.tree.find(exp.Order)
+        return self.op_orderby
+    
+    def limit(self):
+        self.op_limit = self.catalog_schema.tree.find(exp.Limit)
+        return self.op_limit
+
+    def distinct(self):
+        self.op_distinct = self.catalog_schema.tree.find(exp.Distinct)
+        return self.op_distinct
+
+schema = catalog_schema()
+ops = operators(schema)
+
+class planner(operators):
+     def __nodeTree__(self, data):
+        self.data = data
+        self.children = []
+
+     def nodes(self, root, node_b, node_c):
+         root = self.join(self.data)
+         node_b = self.filter(self.data)
+         node_c = self.project(self.data)
+
+         root.children.append(node_b)
+         root.children.append(node_c)
+        
+
+schema = operators()
+ops2 = planner(schema)

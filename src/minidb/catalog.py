@@ -6,6 +6,8 @@ from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
 import sqlglot
+from sqlglot import parse_one
+
 
 
 class catalog_schema():
@@ -14,6 +16,7 @@ class catalog_schema():
         optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"}}
         sql_raw = "select * from catalog_test1"
         tree = sqlglot.parse_one("select * from catalog_test1", dialect="postgres")
+        return tree
 
     def rules(self):
         qualified = qualify(tree, schema=optimizer_catalog, dialect="postgres")
@@ -55,3 +58,44 @@ def test1():
 
 if __name__ == "__main__":
         catalog_schema(),  test1()
+
+class operators():
+
+    def __init__(self, catalog_schema):
+        self.catalog_schema = op_tree
+
+    def scan(self, op_scan):
+        op_scan = __init__(op_tree).find(exp.scan)
+
+    def filter(self, op_filter):
+        op_filter = __init__(op_tree).find(exp.filter)
+
+    def project(self, op_select):
+        op_select = __init__(op_tree).find(exp.select)
+
+    def join(self, op_join):
+        op_join = __init__(op_tree).find(exp.join)
+
+    def aggregate(self, op_aggregate):
+        op_aggregate = __init__(op_tree).find(exp.aggregate)
+
+    def sort(self, op_orderby):
+        op_orderby = __init__(op_tree).find(exp.orderby)
+
+    def limit(self, op_limit):
+        op_limit = __init__(op_tree).find(exp.limit)
+
+    def distinct(self, op_distinct):
+        op_distinct = __init__(op_tree).find(exp.distinct)
+
+class planner(operators):
+     def __init__(self, value):
+        self.value = value
+        self.children = []
+
+     def children(self):
+         root = planner(operators.join())
+        
+
+
+     

@@ -1,3 +1,5 @@
+from logging import root
+
 from sqlglot import exp
 from sqlglot.optimizer.optimizer import DialectType
 from sqlglot.optimizer import optimize
@@ -100,19 +102,25 @@ class operators():
 schema = catalog_schema()
 ops = operators(schema)
 
-class planner(operators):
-     def __nodeTree__(self, data):
+class planner():
+     def __init__(self, data):
         self.data = data
         self.children = []
 
-     def nodes(self, root, node_b, node_c):
-         root = self.join(self.data)
-         node_b = self.filter(self.data)
-         node_c = self.project(self.data)
 
-         root.children.append(node_b)
-         root.children.append(node_c)
-        
+root = planner(ops.From)
+node_b = planner(ops.project())
+node_c = planner(ops.filter())
+node_d = planner(ops.join())
 
-schema = operators()
-ops2 = planner(schema)
+root.children.append(node_b)
+root.children.append(node_c)
+node_b.children.append(node_d)
+
+print("root", root.data)
+
+for child in root.children:
+    print("child", child.data)
+
+
+p = planner(ops)

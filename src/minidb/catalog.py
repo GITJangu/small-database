@@ -16,8 +16,8 @@ class catalog_schema():
 
     def __init__(self):
         optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"}}
-        sql_raw = "select * from catalog_test1"
-        self.tree = sqlglot.parse_one("select * from catalog_test1", dialect="postgres")
+        sql_raw = "select * from catalog_test1 where new_col1 is not null and new_col1 != 0 order by new_col1"
+        self.tree = sqlglot.parse_one("select * from catalog_test1 where new_col1 is not null and new_col1 != 0 order by new_col1", dialect="postgres")
 
 
     def rules(self):
@@ -32,7 +32,7 @@ class catalog_schema():
         normalized_tree = normalize(tree, dnf=True).__init__(sql_raw)
 
     def optimize_tree(self):
-        optimized_tree = optimize(__init__(tree), 
+        self.optimized_tree = optimize(__init__(tree), 
                                   __init__(optimizer_catalog) ,
                                   dialect="postgres",
                                   rules=[rules(qualified), rules(annotated_tree), rules(pushdown_tree), rules(normalized_tree)]
@@ -49,7 +49,7 @@ class catalog_schema():
 
 def test1():
         optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"}}
-        tree = sqlglot.parse_one("select * from catalog_test1", dialect="postgres")
+        tree = sqlglot.parse_one("select * from catalog_test1 where new_col1 is not null and new_col1 != 0 order by new_col1", dialect="postgres")
 
         print(repr(tree))
         print(tree.sql(pretty=True))
@@ -69,14 +69,17 @@ class operators():
 
     def From(self):
         self.op_From = self.catalog_schema.tree.find(exp.From)
+        print("self.op_From", self.op_From)
         return self.op_From
     
     def filter(self):
         self.op_filter = self.catalog_schema.tree.find(exp.Where)
+        print("self.op_filter", self.op_filter)
         return self.op_filter
     
     def project(self):
         self.op_select = self.catalog_schema.tree.find(exp.Select)
+        print("self.op_select", self.op_select)
         return self.op_select
 
     def join(self):
@@ -106,21 +109,45 @@ class planner():
      def __init__(self, data):
         self.data = data
         self.children = []
+        print("planner data", self.data)
+
+        node_labels = {
+            exp.From: "From",
+            exp.Select : "Select",
+            exp.Where: "Where",
+            exp.Join: "Join",
+            exp.And: "And",
+            exp.Order: "Order",
+            exp.Limit: "Limit",
+            exp.Distinct: "Distinct"
+        }
+
+        for nodes in ops.catalog_schema.tree.walk():
+            label = node_labels.get(type(nodes))
+            if label is not None:
+                print(label, nodes, "1")
 
 
-root = planner(ops.From)
+root = planner(ops.From())
 node_b = planner(ops.project())
 node_c = planner(ops.filter())
 node_d = planner(ops.join())
+node_e = planner(ops.aggregate())
+node_f = planner(ops.sort())
 
 root.children.append(node_b)
 root.children.append(node_c)
 node_b.children.append(node_d)
+node_b.children.append(node_e)
+node_e.children.append(node_f)
 
 print("root", root.data)
 
 for child in root.children:
     print("child", child.data)
+
+for child2 in node_b.children:
+    print("child2", child2.data)
 
 
 p = planner(ops)

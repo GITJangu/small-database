@@ -1,5 +1,4 @@
 from logging import root
-
 from sqlglot import exp
 from sqlglot.optimizer.optimizer import DialectType
 from sqlglot.optimizer import optimize
@@ -122,32 +121,70 @@ class planner():
             exp.Distinct: "Distinct"
         }
 
-        for nodes in ops.catalog_schema.tree.walk():
-            label = node_labels.get(type(nodes))
-            if label is not None:
-                print(label, nodes, "1")
+def node_tree():
+
+    node_labels = {
+                exp.From: "From",
+                exp.Select : "Select",
+                exp.Where: "Where",
+                exp.Join: "Join",
+                exp.And: "And",
+                exp.Order: "Order",
+                exp.Limit: "Limit",
+                exp.Distinct: "Distinct"
+            }
+
+    arr = []
+    for nodes in ops.catalog_schema.tree.walk():
+        label = node_labels.get(type(nodes))
+        if label is not None:
+            print("label", label, "nodes", nodes)
+            arr.append(label)
+        print(arr, "nooooooode")
+
+    for i in arr:
+        if i == "From" and nodes is not None:
+            root = planner(ops.From())
+        elif i == "Select" and nodes is not None:
+            node_b = planner(ops.project())
+        elif i == "Join":
+            if nodes is not None:
+                node_c = planner(ops.join())
+            else:
+                continue
+        elif i == "Where" and nodes is not None:
+            if node_c is not None:
+                node_d = planner(ops.filter())
+            elif node_c is None:
+                node_c = planner(ops.filter())
+        elif i == "And":
+            if node_d == planner(ops.filter()):
+                node_e = planner(ops.aggregate())
+            else:
+                node_d = planner(ops.aggregate())
+        elif i == "Order":
+            if node_c is None:
+                node_c = planner(ops.sort())
+            elif node_d is None:
+                node_d = planner(ops.sort())
+            elif node_e is not None:
+                node_f = planner(ops.sort())
 
 
-root = planner(ops.From())
-node_b = planner(ops.project())
-node_c = planner(ops.filter())
-node_d = planner(ops.join())
-node_e = planner(ops.aggregate())
-node_f = planner(ops.sort())
 
-root.children.append(node_b)
-root.children.append(node_c)
-node_b.children.append(node_d)
-node_b.children.append(node_e)
-node_e.children.append(node_f)
+    root.children.append(node_b)
+    root.children.append(node_c)
+    node_b.children.append(node_d)
+    node_b.children.append(node_e)
+    node_e.children.append(node_f)
 
-print("root", root.data)
+    print("root", root.data)
 
-for child in root.children:
-    print("child", child.data)
+    for child in root.children:
+        print("child", child.data)
 
-for child2 in node_b.children:
-    print("child2", child2.data)
+    for child2 in node_b.children:
+        print("child2", child2.data)
 
 
-p = planner(ops)
+node_tree()

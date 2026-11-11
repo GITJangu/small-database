@@ -135,6 +135,12 @@ def node_tree():
             }
 
     arr = []
+    root = None
+    node_b = None
+    node_c = None
+    node_d = None
+    node_e = None
+    node_f = None
     for nodes in ops.catalog_schema.tree.walk():
         label = node_labels.get(type(nodes))
         if label is not None:
@@ -142,33 +148,42 @@ def node_tree():
             arr.append(label)
         print(arr, "nooooooode")
 
-    for i in arr:
-        if i == "From" and nodes is not None:
+
+    if any(i == "From" for i in arr):
             root = planner(ops.From())
-        elif i == "Select" and nodes is not None:
+
+    
+    if any(x == "Select" for x in arr):
             node_b = planner(ops.project())
-        elif i == "Join":
-            if nodes is not None:
-                node_c = planner(ops.join())
-            else:
-                continue
-        elif i == "Where" and nodes is not None:
-            if node_c is not None:
-                node_d = planner(ops.filter())
-            elif node_c is None:
-                node_c = planner(ops.filter())
-        elif i == "And":
-            if node_d == planner(ops.filter()):
-                node_e = planner(ops.aggregate())
-            else:
-                node_d = planner(ops.aggregate())
-        elif i == "Order":
-            if node_c is None:
-                node_c = planner(ops.sort())
-            elif node_d is None:
-                node_d = planner(ops.sort())
-            elif node_e is not None:
-                node_f = planner(ops.sort())
+
+    
+    if any(y == "Join" for y in arr):
+            node_c = planner(ops.join())
+
+   
+    if any(z == "Where" for z in arr):
+        if node_c is not None:
+            node_d = planner(ops.filter())
+        else:
+            node_c = planner(ops.filter())
+
+
+    if any(a == "And" for a in arr):
+        if node_d is not None:
+            node_e = planner(ops.aggregate())
+        else:
+            node_d = planner(ops.aggregate())
+
+
+    if any(b == "Order" for b in arr):
+        if node_c is None:
+            node_c = planner(ops.sort())
+        elif node_d is None:
+            node_d = planner(ops.sort())
+        elif node_e is None:
+            node_e = planner(ops.sort())
+        else:
+            node_f = planner(ops.sort())
 
 
 

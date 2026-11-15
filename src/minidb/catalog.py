@@ -14,9 +14,11 @@ from sqlglot import parse_one
 class catalog_schema():
 
     def __init__(self):
-        optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"}}
-        sql_raw = "select * from catalog_test1 where new_col1 is not null and new_col1 != 0 order by new_col1"
-        self.tree = sqlglot.parse_one("select * from catalog_test1 where new_col1 is not null and new_col1 != 0 order by new_col1", dialect="postgres")
+        optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"},
+                             "catalog_test2": {"new_col2": "TEXT"}
+                             }
+        sql_raw = "select * from catalog_test1 JOIN catalog_test2 ON catalog_test1.new_col1 = catalog_test2.new_col2 WHERE new_col1 is not null and new_col1 != 0 ORDER BY new_col1"
+        self.tree = sqlglot.parse_one("select * from catalog_test1 JOIN catalog_test2 ON catalog_test1.new_col1 = catalog_test2.new_col2 WHERE new_col1 is not null and new_col1 != 0 ORDER BY new_col1", dialect="postgres")
 
 
     def rules(self):
@@ -28,7 +30,7 @@ class catalog_schema():
 
         pushdown_tree =pushdown_predicates(tree, dialect="postgres").__init__(sql_raw)
 
-        normalized_tree = normalize(tree, dnf=True).__init__(sql_raw)
+        self.normalized_tree = normalize(tree, dnf=True).__init__(sql_raw)
 
     def optimize_tree(self):
         self.optimized_tree = optimize(__init__(tree), 
@@ -48,7 +50,7 @@ class catalog_schema():
 
 def test1():
         optimizer_catalog = {"catalog_test1": {"new_col1": "TEXT"}}
-        tree = sqlglot.parse_one("select * from catalog_test1 where new_col1 is not null and new_col1 != 0 order by new_col1", dialect="postgres")
+        tree = sqlglot.parse_one("select * from catalog_test1 JOIN catalog_test2 ON catalog_test1.new_col1 = catalog_test2.new_col2 WHERE new_col1 is not null and new_col1 != 0 ORDER BY new_col1", dialect="postgres")
 
         print(repr(tree))
         print(tree.sql(pretty=True))
@@ -201,5 +203,14 @@ def node_tree():
     for child2 in node_b.children:
         print("child2", child2.data)
 
-
 node_tree()
+
+def physical_plan():
+         table = schema.tree.find(exp.Table)
+         table2 = schema.tree.find_all(exp.Table)
+         table3 = list(table2)
+         print("table", table, "table2", table3[1])
+
+
+physical_plan()
+
